@@ -1,5 +1,7 @@
+# -*- coding: utf-8 -*-
 #!/usr/bin/env python
 import numpy as np
+import codecs
 from sklearn import preprocessing
 from scipy.spatial.distance import pdist, squareform
 from pandas import DataFrame, read_table
@@ -26,6 +28,9 @@ from gensim.models.doc2vec import LabeledSentence
 from gensim.models import Doc2Vec
 from scipy import spatial
 
+reload(sys)  # this is a bit of a hack to get everything to default to utf-8
+sys.setdefaultencoding('UTF8')
+
 #This is the variable that defines how many positive instances a token must have before it is deemed useful.
 #NOTE: this is different from how many times it appeared for a particular instance. For the training that appears to
 #be 1.
@@ -43,6 +48,7 @@ parser.add_argument('--cutoff',choices=['0.25','0.5','0.75'],help='the cutoff fo
 args = parser.parse_args()
 
 resultDir = args.resDir
+
 preFile = args.pre
 kinds = np.array([args.cat])
 NEG_SAMPLE_PORTION = float(args.cutoff)
@@ -564,6 +570,7 @@ class DataSet:
 
       """ find negative instances for all tokens.
       """
+      token_negex = {}
       for tk in tokenDf.keys():
          poss = list(set(tokenDf[tk].getPositives()))
          negs = []
@@ -588,7 +595,7 @@ class DataSet:
                   #now update the main dictionary
 		  for (inst,val) in scores_sorted:
                        if inst in negCandidateScores:
-			    negCandidateScores[inst] += val
+                            negCandidateScores[inst] += val
                        else:
                             negCandidateScores[inst] = val
 
@@ -602,12 +609,30 @@ class DataSet:
 
 
          print "For token",tk,"with",len(poss),"positive examples","choosing",num_to_choose,"examples","out of",len(negCandidateScores.keys())
+         #This dictionary is used to record the negative instances found for each token
+         token_negex[tk] = list(set(choices))
+         #print tk+":"+str(list(negCandidateScores.keys())).replace("[","").replace("]","")
 
-         #print "Original negatives:",negs
-         #print "New negatives:", choices
          negsPart = choices
          tokenDf[tk].extendNegatives(negsPart)
-      exit()
+         #print tk,":",token_negex[tk]
+
+      all_tkns = list(token_negex.keys())
+      max_insts = np.max([len(token_negex[key]) for key in token_negex])
+      with codecs.open(resultDir+"/negative_insts.csv","w",encoding="utf-8") as out_file:
+          for tkn in all_tkns:
+              tkn = tkn.encode("UTF-8")
+              out_file.write(tkn)
+              out_file.write(",")
+          out_file.write("\n")
+          for i in range(max_insts):
+              for tkn in all_tkns:
+                  if len(token_negex[tkn]) > i:
+                      out_file.write(str(token_negex[tkn][i])+",")
+                  else:
+                      out_file.write(",")
+              out_file.write("\n")
+
 
       return tks
 
