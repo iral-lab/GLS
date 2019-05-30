@@ -262,7 +262,7 @@ def writePosNeg():
               #get the negative instances and their distances. Add it to the overal dict
               #only consider instances that hace not seen the token in their descriptions
               negDocVec = negsD[v]
-              
+
               for (negInst,distance) in negDocVec:
                  if negInst in negSampleTokens[kTkn]:
                     if negInst in sum_negative_dict:
@@ -369,29 +369,58 @@ def selectCorrectImage(c,testInstances):
 				selInst.append(inst)
 	return list(set(selInst))
 
-def getMatchNumbers(relevantInst,selInst,testInstances):
-	"""
+def getMatchNumbers(relevantInst,selInst,testInstances, token, token_confusion_dict):
+      """
 	This function takes the list of the instances that were
 	selected to look at (positive)
 	and the instances the classifier deemed
 	positive.
 	the TP/FP/TN/FN scores
-	"""
+      """
 
-	tNo = float(len(testInstances))
-	tP = 0.0
-	fN = 0.0
-	fP = 0.0
-        tps = []
-	#the true positives are the ones chosen by the classifier and also chosen as relevant positive examples
-        if len(relevantInst) > 0:
-	   tps = list(set(relevantInst).intersection(set(selInst)))
-	tP = float(len(tps))
-	#The false positives are the ones chosen as selInst but not actually positive
-	fP = float(len(selInst) - tP)
-	fN = float(len(relevantInst) - tP)
-	tN = tNo - tP - fN - fP
-	return (tP,fN,fP,tN)
+      tNo = float(len(testInstances))
+      tP = 0.0
+      fN = 0.0
+      fP = 0.0
+      tps = []
+      #the true positives are the ones chosen by the classifier and also chosen as relevant positive examples
+      if len(relevantInst) > 0:
+            tps = list(set(relevantInst).intersection(set(selInst)))
+            for true_pos in tps:
+                  if true_pos not in token_confusion_dict["TP"]:
+                        token_confusion_dict["TP"][true_pos] = 1
+                  else:
+                        token_confusion_dict["TP"][true_pos] += 1
+            #the stuff that was selected but not actually positive
+            fps = list(set(selInst).difference(set(relevantInst)))
+            for false_pos in fps:
+                  if false_pos not in token_confusion_dict["FP"]:
+                        token_confusion_dict["FP"][false_pos] = 1
+                  else:
+                        token_confusion_dict["FP"][false_pos] += 1
+
+            #the stuff that was positive but not selected
+            fns = list(set(relevantInst).difference(set(selInst)))
+            for false_negs in fns:
+                  if false_negs not in token_confusion_dict["FN"]:
+                        token_confusion_dict["FN"][false_negs] = 1
+                  else:
+                        token_confusion_dict["FN"][false_negs] += 1
+
+            #the stuff that was not selected and was negative
+            tns = set(testInstances).difference(set(selInst).union(set(relevantInst)))
+            for true_negs in tns:
+                  if true_negs not in token_confusion_dict["TN"]:
+                        token_confusion_dict["TN"][true_negs] = 1
+                  else:
+                        token_confusion_dict["TN"][true_negs] += 1
+
+      tP = float(len(tps))
+      #The false positives are the ones chosen as selInst but not actually positive
+      fP = float(len(selInst) - tP)
+      fN = float(len(relevantInst) - tP)
+      tN = tNo - tP - fN - fP
+      return (tP,fN,fP,tN)
 
 def getStats(tP,fN,fP,tN):
 	"""
@@ -484,7 +513,8 @@ for fNo in fFldrs:
 
     #get the list of tokens we are looking at which we have probabilities for and have positive/negative instances
     testTokens = list(set(posInsts.keys()).union(set(negInsts.keys())))
-    testTokens = list(set(testTokens).intersection(set(classifierProbs.keys())))
+    #NOTE: this would mean we would only test on the tokens seen in training
+    #testTokens = list(set(testTokens).intersection(set(classifierProbs.keys())))
 
 
     accFldr= []
@@ -493,15 +523,9 @@ for fNo in fFldrs:
     recFldr= []
 
 
-    #for the tokens that never appeared, give them a 0 score for everything
-    """for cc in range(len(noTokens)):
-        accFldr.append(0.0)
-        f1sFldr.append(0.0)
-        precFldr.append(0.0)
-        recFldr.append(0.0)"""
-
     #loop over the tokens that we do have examples for
     print "token,accuracy,precision,recall,f1,num_positive_instances,num_negative_instances"
+
     for c in testTokens:
 	  #print "number of testTokens: ",len(testTokens)
 	  dictRes = {'Classifier' : " "}
@@ -525,11 +549,24 @@ for fNo in fFldrs:
 
 	  #After subsetting by the test instances, see if we still have any to test
           if len(testPosInsts) > 0 or len(testNegInsts) > 0:
+
+                  #If this token was not learned in training, it scores 0 in testing
+                  if c not in list(classifierProbs.keys()):
+                     print str(c)+",0,0,0,0,"+str(len(testPosInsts))+","+str(len(testNegInsts))
+                     accFldr.append(0.0)
+                     f1sFldr.append(0.0)
+                     precFldr.append(0.0)
+                     recFldr.append(0.0)
+                     continue
+
+
                   accTkn = []
                   f1sTkn = []
                   precTkn = []
                   recTkn = []
 		  #repeat this test 10 times and average the results
+		  token_confusion_dict = {"TP":{},"FP":{},"TN":{},"FN":{}}
+
 		  for tms in range(10):
 			  #choose a random number between 0,1,2 for the number of positive instances to look at
 			  #TODO: why these exact values??
@@ -548,7 +585,7 @@ for fNo in fFldrs:
 
 			  #get the TP,FP,TN,FN scores for this batch of test instances and token
 			  #calculate the stats from this
-			  (tP,fN,fP,tN) = getMatchNumbers(relevantInst,selInst,testInstances)
+			  (tP,fN,fP,tN) = getMatchNumbers(relevantInst,selInst,testInstances, c, token_confusion_dict)
 			  (acc,prec,rec,f1s) = getStats(tP,fN,fP,tN)
 
 			  #Write the results in the csv file
@@ -576,8 +613,9 @@ for fNo in fFldrs:
                   f1T = np.mean(f1sTkn)
                   precT = np.mean(precTkn)
                   recT = np.mean(recTkn)
-
-		  print str(c)+","+str(accT)+","+str(precT)+","+str(recT)+","+str(f1T)+","+str(len(testPosInsts))+","+str(len(testNegInsts))
+          
+          print str(c)+","+str(accT)+","+str(precT)+","+str(recT)+","+str(f1T)+","+str(len(testPosInsts))+","+str(len(testNegInsts))
+          
 	  #write the results to the overal file
           dictRes = {'Classifier' : 'Total - ' + str(c),'Accuracy' : str(accT),'Precision' : str(precT) ,'Recall' : str(recT),'F1-Score' : str(f1T)}
           writer.writerow(dictRes)
