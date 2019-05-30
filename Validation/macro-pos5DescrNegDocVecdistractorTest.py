@@ -63,6 +63,10 @@ if len(argvs) > 5 and "train" in argvs:
    confFile = "groundTruthPredictionTrain.csv"
 else:
    confFile = "groundTruthPrediction.csv"
+   if len(argvs) > 5:
+      RAND_SEED = int(argvs[5])
+      random.seed(RAND_SEED)
+
 
 posName = "posInstances.conf"
 negName = "negInstances.conf"

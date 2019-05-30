@@ -46,8 +46,12 @@ parser.add_argument('--resDir',help='path to result directory',required=True)
 parser.add_argument('--cat', help='type for learning', choices=['all','rgb','shape','object'],required=True)
 parser.add_argument('--pre', help='the file with the preprocessed data', required=True)
 parser.add_argument('--cutoff',choices=['0.25','0.5','0.75'],help='the cutoff for what portion of negative examples to use', default='0.25')
+parser.add_argument('--seed',help='a random seed to use', default=None, required=False)
 
 args = parser.parse_args()
+
+RAND_SEED = int(args.seed)
+random.seed(RAND_SEED)
 
 resultDir = args.resDir
 
