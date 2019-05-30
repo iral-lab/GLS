@@ -28,6 +28,7 @@ from gensim.models.doc2vec import LabeledSentence
 from gensim.models import Doc2Vec
 from scipy import spatial
 
+
 reload(sys)  # this is a bit of a hack to get everything to default to utf-8
 sys.setdefaultencoding('UTF8')
 
@@ -38,6 +39,7 @@ MIN_POS_INSTS = 3
 #This controls the minimum number of times a token has to appear in descriptions for an instance before the instance
 #is deemed to be a positive example of this token
 MIN_TOKEN_PER_INST = 5
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--resDir',help='path to result directory',required=True)
@@ -460,8 +462,8 @@ class DataSet:
       """""""""""""""""""""""""""""""""""""""""
 		Initialization function for Dataset class
          Args:
-		path - physical location of image dataset
-		anFile - 6k amazon mechanical turk description file
+         	path - physical location of image dataset
+         	anFile - 6k amazon mechanical turk description file
          Returns: Nothing
       """""""""""""""""""""""""""""""""""""""""
       self.dsPath = path
