@@ -14,6 +14,7 @@ import os
 import math
 import sys
 from datetime import datetime
+import re
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import (brier_score_loss, precision_score, recall_score,f1_score)
 from sklearn import linear_model
@@ -79,6 +80,21 @@ tests = ""
 
 generalShapes = ['spherical', 'cylinder', 'square', 'rounded', 'cylindershaped', 'cuboid', 'rectangleshape','arcshape', 'sphere', 'archshaped', 'cubeshaped', 'curved' ,'rectangular', 'triangleshaped', 'halfcircle', 'globular','halfcylindrical', 'circle', 'rectangle', 'circular', 'cube', 'triangle', 'cubic', 'triangular', 'cylindrical','arch','semicircle', 'squareshape', 'arched','curve', 'halfcylinder', 'wedge', 'cylindershape', 'round', 'block', 'cuboidshaped']
 """
+
+# written to parse all files
+
+# get the object name from object label string
+def get_object_name(object_str):
+    match = re.search(r'(\w+[^1-9][^1-9])_\d+', object_str)
+    return match.group(1)
+
+# get the number for the object label string
+def get_object_num(object_str):
+    match = re.search(r'\w+[^1-9][^1-9]_(\d.*)', object_str)
+    return match.group(1)
+
+
+
 
 def fileAppend(fName, sentence):
   """""""""""""""""""""""""""""""""""""""""
@@ -490,7 +506,8 @@ class DataSet:
       for (k1,v1) in nDs:
           instName = k1.strip()
           (cat,inst) = instName.split("/")
-          (_,num) = inst.split("_")
+		  # issue with things like water_bottle
+          num = get_object_num(inst)
           if cat not in categories.keys():
              categories[cat] = Category(cat)
           categories[cat].addCategoryInstances(num)
@@ -548,6 +565,7 @@ class DataSet:
 
       for inst in docs.keys():
           #get the counts for tokens and filter those < MIN_TOKEN_PER_INST
+          print(docs[inst])
           token_counts = pd.Series(docs[inst].split(" ")).value_counts()
           token_counts = token_counts[token_counts >= MIN_TOKEN_PER_INST]
           dsTokens = token_counts.index.tolist()
