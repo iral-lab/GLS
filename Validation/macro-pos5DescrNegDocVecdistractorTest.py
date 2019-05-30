@@ -63,6 +63,10 @@ if len(argvs) > 5 and "train" in argvs:
    confFile = "groundTruthPredictionTrain.csv"
 else:
    confFile = "groundTruthPrediction.csv"
+   if len(argvs) > 5:
+      RAND_SEED = int(argvs[5])
+      random.seed(RAND_SEED)
+
 
 posName = "posInstances.conf"
 negName = "negInstances.conf"
@@ -613,9 +617,9 @@ for fNo in fFldrs:
                   f1T = np.mean(f1sTkn)
                   precT = np.mean(precTkn)
                   recT = np.mean(recTkn)
-          
+
           print str(c)+","+str(accT)+","+str(precT)+","+str(recT)+","+str(f1T)+","+str(len(testPosInsts))+","+str(len(testNegInsts))
-          
+
 	  #write the results to the overal file
           dictRes = {'Classifier' : 'Total - ' + str(c),'Accuracy' : str(accT),'Precision' : str(precT) ,'Recall' : str(recT),'F1-Score' : str(f1T)}
           writer.writerow(dictRes)
