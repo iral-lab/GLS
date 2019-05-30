@@ -83,13 +83,9 @@ def getDocsForTest(arTokens,fName):
     l = line.split(",")
     if l[0] in arTokens:
      l2 = line.replace(l[0]+ ",",'')
-<<<<<<< HEAD
+
      l3 = l2.replace('\n','').replace("\r","")
-=======
-     l3 = l2.replace('\n','')
-#     l3 = re.sub('[^A-Za-z0-9\ ]+', '', l3)
-#     l3 = l3.lower()
->>>>>>> 02ac5e1223607178690fe84aed74d7c57522ed55
+
      if(line != "" and l3 != "") :
       if l[0] in instSentences.keys():
          sent = instSentences[l[0]]
@@ -109,13 +105,11 @@ def sentenceToWordLists(docs):
    return docLists
 
 def sentenceToWordDicts(docs):
-<<<<<<< HEAD
    """
    This function just turns a dictionary of strings into a dictionary
    where the strings are now a list of words.
    """
-=======
->>>>>>> 02ac5e1223607178690fe84aed74d7c57522ed55
+
    docDicts = {}
    for key in docs.keys():
       sent = docs[key]
@@ -149,11 +143,7 @@ def findTopNtfidfterms(docLists,tfidfLists,N):
       dTFIDFMap = {}
       for j in range(len(dList)):
           dTFIDFMap[dList[j]] = tList[j]
-<<<<<<< HEAD
 
-=======
-
->>>>>>> 02ac5e1223607178690fe84aed74d7c57522ed55
       stC = sorted(dTFIDFMap.items(), key=lambda x: x[1])
       lastpairs = stC[len(stC) - N  :]
       vals = []
@@ -176,11 +166,7 @@ class LabeledLineSentence(object):
         for index, arDoc in enumerate(self.docLists):
             self.sentences.append(LabeledSentence(arDoc, [self.docLabels[index]]))
         return self.sentences
-<<<<<<< HEAD
 
-=======
-
->>>>>>> 02ac5e1223607178690fe84aed74d7c57522ed55
     def sentences_perm(self):
         shuffle(self.sentences)
         return self.sentences
@@ -194,7 +180,7 @@ def cosine_similarity(x,y):
    return round(numerator/float(denominator),3)
 
 def doc2Vec(docs):
-<<<<<<< HEAD
+
   """
   Ths function takes in the instance:all descriptions dictionary.
 
@@ -204,13 +190,7 @@ def doc2Vec(docs):
   for key in docs.keys():
     ar = key.split("/")
     docLabels.append(key)
-=======
-  docLabels = []
-  docNames = docs.keys()
-  for key in docs.keys():
-   ar = key.split("/")
-   docLabels.append(key)
->>>>>>> 02ac5e1223607178690fe84aed74d7c57522ed55
+
   docLists = sentenceToWordLists(docs)
   docDicts = sentenceToWordDicts(docs)
   sentences = LabeledLineSentence(docLists,docLabels)
@@ -224,10 +204,9 @@ def doc2Vec(docs):
     model.train(sentences.sentences_perm(),total_examples = token_count,epochs=model.iter)
   degreeMap = {}
   angles = []
-<<<<<<< HEAD
+
   #loop over all pairs of instance
-=======
->>>>>>> 02ac5e1223607178690fe84aed74d7c57522ed55
+
   for i , item1 in enumerate(docLabels):
    fDoc = model.docvecs[docLabels[i]]
 
@@ -235,12 +214,10 @@ def doc2Vec(docs):
    cInstance = docLabels[i]
    for j,item2 in enumerate(docLabels):
      tDoc = model.docvecs[docLabels[j]]
-<<<<<<< HEAD
+
      #get the similarity between instances
      cosineVal = max(-1.0,min(1.0,cosine_similarity(fDoc,tDoc)))
-=======
-     cosineVal = cosine_similarity(fDoc,tDoc)
->>>>>>> 02ac5e1223607178690fe84aed74d7c57522ed55
+
      tInstance = docLabels[j]
      cValue = math.degrees(math.acos(cosineVal))
      cInstMap[tInstance] = cValue
@@ -249,7 +226,7 @@ def doc2Vec(docs):
   maxAngle = max(angles)
   thresh5th = maxAngle
   thresh4th = maxAngle / 3
-<<<<<<< HEAD
+
   #  thresh4th = 50.0
   negMaps = {}
   #this appears to return the similarity metric between an intance and every other instance
@@ -268,15 +245,4 @@ def doc2Vec(docs):
    #for itemSS in ssNew:
    #    negMaps[k].append(itemSS[0])
 
-=======
-#  thresh4th = 50.0
-  negMaps = {}
-  for k,v in degreeMap.items() :
-   negMaps[k] = []
-   ss = sorted(v.items(), key=lambda x: x[1])
-   sPoint = int(len(ss)/3)
-   ssNew = ss[sPoint:]
-   for itemSS in ssNew:
-       negMaps[k].append(itemSS[0])
->>>>>>> 02ac5e1223607178690fe84aed74d7c57522ed55
   return negMaps
