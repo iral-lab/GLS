@@ -48,6 +48,7 @@ parser.add_argument('--cat', help='type for learning', choices=['all','rgb','sha
 parser.add_argument('--pre', help='the file with the preprocessed data', required=True)
 parser.add_argument('--cutoff',choices=['0.25','0.5','0.75'],help='the cutoff for what portion of negative examples to use', default='0.25')
 parser.add_argument('--seed',help='a random seed to use', default=None, required=False)
+parser.add_argument('--visfeat',help='folder for features', default="ImgDz", required=False)
 
 args = parser.parse_args()
 
@@ -65,7 +66,7 @@ execType = 'random'
 
 execPath = './'
 dPath = "../"
-dsPath = dPath + "ImgDz/"
+dsPath = dPath + args.visfeat
 fAnnotation = execPath + "list_of_instances.conf"
 
 dgAbove = 80
@@ -565,7 +566,6 @@ class DataSet:
 
       for inst in docs.keys():
           #get the counts for tokens and filter those < MIN_TOKEN_PER_INST
-          print(docs[inst])
           token_counts = pd.Series(docs[inst].split(" ")).value_counts()
           token_counts = token_counts[token_counts >= MIN_TOKEN_PER_INST]
           dsTokens = token_counts.index.tolist()
