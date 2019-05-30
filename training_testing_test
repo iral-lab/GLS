@@ -1,0 +1,3 @@
+#!/bin/bash
+python cLL-ML.py --resDir testing_english --pre conf_files/english/english_raw.conf --cat rgb --seed 123456789
+python Validation/macro-pos5DescrNegDocVecdistractorTest.py testing_english/NoOfDataPoints rgb rgb conf_files/english/english_raw.conf 123456789
