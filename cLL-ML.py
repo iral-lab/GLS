@@ -49,6 +49,7 @@ parser.add_argument('--pre', help='the file with the preprocessed data', require
 parser.add_argument('--cutoff',choices=['0.25','0.5','0.75'],help='the cutoff for what portion of negative examples to use', default='0.25')
 parser.add_argument('--seed',help='a random seed to use', default=None, required=False)
 parser.add_argument('--visfeat',help='folder for features', default="ImgDz", required=False)
+parser.add_argument('--listof',help='file for list of instances/files', default="list_of_instances.conf", required=False)
 
 args = parser.parse_args()
 
@@ -67,7 +68,7 @@ execType = 'random'
 execPath = './'
 dPath = "../"
 dsPath = dPath + args.visfeat
-fAnnotation = execPath + "list_of_instances.conf"
+fAnnotation = execPath + args.listof
 
 dgAbove = 80
 
@@ -196,6 +197,8 @@ class NegSampleSelection:
          for j,item2 in enumerate(docLabels):
             tDoc = model.docvecs[docLabels[j]]
             cosineVal = max(-1.0,min(self.cosine_similarity(fDoc,tDoc),1.0))
+
+            print(item1 + " , " + item2 + " : " + str(cosineVal))
 
             try:
             	cValue = math.degrees(math.acos(cosineVal))
@@ -566,6 +569,7 @@ class DataSet:
 
       for inst in docs.keys():
           #get the counts for tokens and filter those < MIN_TOKEN_PER_INST
+
           token_counts = pd.Series(docs[inst].split(" ")).value_counts()
           token_counts = token_counts[token_counts >= MIN_TOKEN_PER_INST]
           dsTokens = token_counts.index.tolist()
@@ -853,6 +857,7 @@ if __name__== "__main__":
   ds = DataSet(dsPath,anFile)
   """ find all categories and instances in the dataset """
   (cDf,nDf) = ds.findCategoryInstances()
+
   """ find all test instances. We are doing 4- fold cross validation """
   tests = ds.splitTestInstances(cDf)
   print "ML START :: " + datetime.now().strftime("%Y-%m-%d %H:%M:%S")
