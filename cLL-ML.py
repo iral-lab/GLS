@@ -197,9 +197,7 @@ class NegSampleSelection:
          for j,item2 in enumerate(docLabels):
             tDoc = model.docvecs[docLabels[j]]
             cosineVal = max(-1.0,min(self.cosine_similarity(fDoc,tDoc),1.0))
-
-            print(item1 + " , " + item2 + " : " + str(cosineVal))
-
+			
             try:
             	cValue = math.degrees(math.acos(cosineVal))
             except:
