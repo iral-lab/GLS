@@ -1,5 +1,4 @@
  python cLL-ML.py --resDir testing_english --pre conf_files/english/english_raw.conf --cat rgb --seed 123456789
- python cLL-ML.py --resDir testing_english --pre conf_files/english/english_stemmed.conf --cat rgb --seed 123456789
  python cLL-ML.py --resDir testing_english_stem --pre conf_files/english/english_stemmed.conf --cat rgb --seed 123456789
  python cLL-ML.py --resDir testing_hindi --pre conf_files/hindi/hindi_main_excluded_workers_raw.conf --cat rgb --seed 123456789
  python cLL-ML.py --resDir testing_hindi_stem --pre conf_files/hindi/hindi_main_excluded_workers_stemmed.conf --seed 123456789
