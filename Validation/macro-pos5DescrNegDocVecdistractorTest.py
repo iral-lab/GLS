@@ -29,8 +29,8 @@ import math
 
 #this is a constant of the number of times a token needs to appear in instance descriptions before the instance
 #is counted as a positive example of that token
-MIN_INSTS = 5
-NEG_SAMPLE_PORTION = 0.25
+MIN_INSTS = 2
+NEG_SAMPLE_PORTION = 0.75
 #These are global variables that will be used later
 posInsts = {}
 negInsts = {}
@@ -44,7 +44,8 @@ if len(argvs) == 1:
 
 fld = str(argvs[1])
 
-argProb = 0.50
+# changed - Luke
+argProb = float(input("input:"))
 tID = ""
 
 if len(argvs) > 2:
@@ -53,7 +54,6 @@ if len(argvs) > 2:
 cID = ""
 if len(argvs) > 3:
    cID = str(argvs[3])
-
 
 preFile = "../6k_lemmatized_72instances_mechanicalturk_description.conf"
 if len(argvs) > 4:
@@ -663,6 +663,8 @@ for fNo in fFldrs:
 
 #print dRes
 perfFile1.close()
+
+print "Threshold : " + str(argProb)
 print "Folder Number: ",
 print ", ".join(noIndArs)
 print "Accuracy: ",

@@ -28,6 +28,7 @@ import argparse
 from gensim.models.doc2vec import LabeledSentence
 from gensim.models import Doc2Vec
 from scipy import spatial
+import pickle
 
 
 reload(sys)  # this is a bit of a hack to get everything to default to utf-8
@@ -39,7 +40,7 @@ sys.setdefaultencoding('UTF8')
 MIN_POS_INSTS = 3
 #This controls the minimum number of times a token has to appear in descriptions for an instance before the instance
 #is deemed to be a positive example of this token
-MIN_TOKEN_PER_INST = 5
+MIN_TOKEN_PER_INST = 2
 
 
 parser = argparse.ArgumentParser()
@@ -50,11 +51,12 @@ parser.add_argument('--cutoff',choices=['0.25','0.5','0.75'],help='the cutoff fo
 parser.add_argument('--seed',help='a random seed to use', default=None, required=False)
 parser.add_argument('--visfeat',help='folder for features', default="ImgDz", required=False)
 parser.add_argument('--listof',help='file for list of instances/files', default="list_of_instances.conf", required=False)
+parser.add_argument('--negexmpl',help='file where negative examples are saved', default="", required=False)
 
 args = parser.parse_args()
 
-RAND_SEED = int(args.seed)
-random.seed(RAND_SEED)
+# RAND_SEED = int(args.seed)
+# random.seed(RAND_SEED)
 
 resultDir = args.resDir
 
@@ -69,6 +71,9 @@ execPath = './'
 dPath = "../"
 dsPath = dPath + args.visfeat
 fAnnotation = execPath + args.listof
+
+# whether to regen negative examples or load from previous file
+argGenNeg = args.negexmpl
 
 dgAbove = 80
 
@@ -195,9 +200,13 @@ class NegSampleSelection:
          cInstMap = {}
          cInstance = docNames[i]
          for j,item2 in enumerate(docLabels):
+
             tDoc = model.docvecs[docLabels[j]]
             cosineVal = max(-1.0,min(self.cosine_similarity(fDoc,tDoc),1.0))
-			
+
+			# # DEBUG:
+            print(str(item1) + " <> " + str(item2) + " = " + str(cosineVal))
+
             try:
             	cValue = math.degrees(math.acos(cosineVal))
             except:
@@ -219,6 +228,11 @@ class NegSampleSelection:
              sentAngles += item[0]+"-"+str(item[1])+","
         sentAngles = sentAngles[:-1]
         negInstances[k] = sentAngles
+
+	  # pickle negative examples for later use
+      with open('recentNegExamples.pickle', 'wb') as handle:
+		  pickle.dump(negInstances, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
       return negInstances
 
 ############Negative Example Generation --- END ########
@@ -592,7 +606,13 @@ class DataSet:
       sent = "Tokens :: "+ " ".join(tokenDf.keys())
       fileAppend(fName,sent)
       negSelection = NegSampleSelection(docs)
-      negExamples = negSelection.generateNegatives()
+
+      # check if the negative examples
+      if argGenNeg != "":
+         with open(argGenNeg, 'rb') as handle:
+            negExamples = pickle.load(handle)
+      else:
+         negExamples = negSelection.generateNegatives()
 
       """ find negative instances for all tokens.
       """

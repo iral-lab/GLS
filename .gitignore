@@ -1,0 +1,15 @@
+
+*.csv
+*.bash
+run_commands_sample
+*.txt
+Validation/OG/Untitled
+Validation/process_output.py
+Validation/python2
+Validation/read_in_results.py
+conf_files/english/english_stemmed.conf
+conf_files/english/english_stemmed.conf
+conf_files/UW_english/UW_AMT_description_documents_per_image_nopreproc_stop_raw.conf
+Validation/get_just_results.py
+Validation/interval_run.py
+Validation/macro-pos5DescrNegDocVecdistractorTest.py
