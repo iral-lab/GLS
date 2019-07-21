@@ -29,7 +29,6 @@ from gensim.models.doc2vec import LabeledSentence
 from gensim.models import Doc2Vec
 from scipy import spatial
 
-
 reload(sys)  # this is a bit of a hack to get everything to default to utf-8
 sys.setdefaultencoding('UTF8')
 
@@ -76,7 +75,6 @@ ds = ""
 cDf = ""
 nDf = ""
 tests = ""
-
 
 """generalObjs = ['potatoe','cylinder','square', 'cuboid', 'sphere', 'halfcircle','circle','rectangle','cube','triangle','arch','semicircle','halfcylinder','wedge','block','apple','carrot','tomato','lemon','cherry','lime', 'banana','corn','hemisphere','cucumber','cabbage','ear','potato', 'plantain','eggplant']
 
@@ -197,7 +195,8 @@ class NegSampleSelection:
          for j,item2 in enumerate(docLabels):
             tDoc = model.docvecs[docLabels[j]]
             cosineVal = max(-1.0,min(self.cosine_similarity(fDoc,tDoc),1.0))
-			
+
+
             try:
             	cValue = math.degrees(math.acos(cosineVal))
             except:
@@ -219,6 +218,11 @@ class NegSampleSelection:
              sentAngles += item[0]+"-"+str(item[1])+","
         sentAngles = sentAngles[:-1]
         negInstances[k] = sentAngles
+
+	  # pickle negative examples for later use
+      with open('NegExamples_'+ resultDir + '.pickle', 'wb') as handle:
+		  pickle.dump(negInstances, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
       return negInstances
 
 ############Negative Example Generation --- END ########

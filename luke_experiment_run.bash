@@ -1,0 +1,1 @@
+python2 cLL-ML.py --resDir ../Results --cat object --pre conf_files/UW_english/UW_AMT_description_documents_per_image_nopreproc_stop_raw.conf --cutoff 0.25 --seed 25 --visfeat UW_ImgDzPerImage --listof list_of_images.conf

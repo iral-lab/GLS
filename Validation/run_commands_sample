@@ -1,0 +1,40 @@
+#!/bin/bash
+python cLL-ML.py --resDir hi_raw_75_0 --pre conf_files/hindi/hindi_main_excluded_workers_raw.conf --cat all
+python cLL-ML.py --resDir hi_raw_75_1 --pre conf_files/hindi/hindi_main_excluded_workers_raw.conf --cat all
+python cLL-ML.py --resDir hi_raw_75_2 --pre conf_files/hindi/hindi_main_excluded_workers_raw.conf --cat all
+python cLL-ML.py --resDir hi_raw_75_3 --pre conf_files/hindi/hindi_main_excluded_workers_raw.conf --cat all
+python cLL-ML.py --resDir hi_raw_75_4 --pre conf_files/hindi/hindi_main_excluded_workers_raw.conf --cat all
+python cLL-ML.py --resDir hi_raw_75_5 --pre conf_files/hindi/hindi_main_excluded_workers_raw.conf --cat all
+python cLL-ML.py --resDir hi_raw_75_6 --pre conf_files/hindi/hindi_main_excluded_workers_raw.conf --cat all
+python cLL-ML.py --resDir hi_raw_75_7 --pre conf_files/hindi/hindi_main_excluded_workers_raw.conf --cat all
+python cLL-ML.py --resDir hi_raw_75_8 --pre conf_files/hindi/hindi_main_excluded_workers_raw.conf --cat all
+
+for i in {1..21}; do python Validation/macro-pos5DescrNegDocVecdistractorTest.py hi_raw_75_0/NoOfDataPoints object object conf_files/hindi/hindi_main_excluded_workers_raw.conf | tee -a hi_raw_75_object.csv; done
+for i in {1..21}; do python Validation/macro-pos5DescrNegDocVecdistractorTest.py hi_raw_75_1/NoOfDataPoints object object conf_files/hindi/hindi_main_excluded_workers_raw.conf | tee -a hi_raw_75_object.csv; done
+for i in {1..21}; do python Validation/macro-pos5DescrNegDocVecdistractorTest.py hi_raw_75_2/NoOfDataPoints object object conf_files/hindi/hindi_main_excluded_workers_raw.conf | tee -a hi_raw_75_object.csv; done
+for i in {1..21}; do python Validation/macro-pos5DescrNegDocVecdistractorTest.py hi_raw_75_3/NoOfDataPoints object object conf_files/hindi/hindi_main_excluded_workers_raw.conf | tee -a hi_raw_75_object.csv; done
+for i in {1..21}; do python Validation/macro-pos5DescrNegDocVecdistractorTest.py hi_raw_75_4/NoOfDataPoints object object conf_files/hindi/hindi_main_excluded_workers_raw.conf | tee -a hi_raw_75_object.csv; done
+for i in {1..21}; do python Validation/macro-pos5DescrNegDocVecdistractorTest.py hi_raw_75_5/NoOfDataPoints object object conf_files/hindi/hindi_main_excluded_workers_raw.conf | tee -a hi_raw_75_object.csv; done
+for i in {1..21}; do python Validation/macro-pos5DescrNegDocVecdistractorTest.py hi_raw_75_6/NoOfDataPoints object object conf_files/hindi/hindi_main_excluded_workers_raw.conf | tee -a hi_raw_75_object.csv; done
+for i in {1..21}; do python Validation/macro-pos5DescrNegDocVecdistractorTest.py hi_raw_75_7/NoOfDataPoints object object conf_files/hindi/hindi_main_excluded_workers_raw.conf | tee -a hi_raw_75_object.csv; done
+for i in {1..21}; do python Validation/macro-pos5DescrNegDocVecdistractorTest.py hi_raw_75_8/NoOfDataPoints object object conf_files/hindi/hindi_main_excluded_workers_raw.conf | tee -a hi_raw_75_object.csv; done
+
+for i in {1..21}; do python Validation/macro-pos5DescrNegDocVecdistractorTest.py hi_raw_75_0/NoOfDataPoints rgb rgb conf_files/hindi/hindi_main_excluded_workers_raw.conf | tee -a hi_raw_75_rgb.csv; done
+for i in {1..21}; do python Validation/macro-pos5DescrNegDocVecdistractorTest.py hi_raw_75_1/NoOfDataPoints rgb rgb conf_files/hindi/hindi_main_excluded_workers_raw.conf | tee -a hi_raw_75_rgb.csv; done
+for i in {1..21}; do python Validation/macro-pos5DescrNegDocVecdistractorTest.py hi_raw_75_2/NoOfDataPoints rgb rgb conf_files/hindi/hindi_main_excluded_workers_raw.conf | tee -a hi_raw_75_rgb.csv; done
+for i in {1..21}; do python Validation/macro-pos5DescrNegDocVecdistractorTest.py hi_raw_75_3/NoOfDataPoints rgb rgb conf_files/hindi/hindi_main_excluded_workers_raw.conf | tee -a hi_raw_75_rgb.csv; done
+for i in {1..21}; do python Validation/macro-pos5DescrNegDocVecdistractorTest.py hi_raw_75_4/NoOfDataPoints rgb rgb conf_files/hindi/hindi_main_excluded_workers_raw.conf | tee -a hi_raw_75_rgb.csv; done
+for i in {1..21}; do python Validation/macro-pos5DescrNegDocVecdistractorTest.py hi_raw_75_5/NoOfDataPoints rgb rgb conf_files/hindi/hindi_main_excluded_workers_raw.conf | tee -a hi_raw_75_rgb.csv; done
+for i in {1..21}; do python Validation/macro-pos5DescrNegDocVecdistractorTest.py hi_raw_75_6/NoOfDataPoints rgb rgb conf_files/hindi/hindi_main_excluded_workers_raw.conf | tee -a hi_raw_75_rgb.csv; done
+for i in {1..21}; do python Validation/macro-pos5DescrNegDocVecdistractorTest.py hi_raw_75_7/NoOfDataPoints rgb rgb conf_files/hindi/hindi_main_excluded_workers_raw.conf | tee -a hi_raw_75_rgb.csv; done
+for i in {1..21}; do python Validation/macro-pos5DescrNegDocVecdistractorTest.py hi_raw_75_8/NoOfDataPoints rgb rgb conf_files/hindi/hindi_main_excluded_workers_raw.conf | tee -a hi_raw_75_rgb.csv; done
+
+for i in {1..21}; do python Validation/macro-pos5DescrNegDocVecdistractorTest.py hi_raw_75_0/NoOfDataPoints shape shape conf_files/hindi/hindi_main_excluded_workers_raw.conf | tee -a hi_raw_75_shape.csv; done
+for i in {1..21}; do python Validation/macro-pos5DescrNegDocVecdistractorTest.py hi_raw_75_1/NoOfDataPoints shape shape conf_files/hindi/hindi_main_excluded_workers_raw.conf | tee -a hi_raw_75_shape.csv; done
+for i in {1..21}; do python Validation/macro-pos5DescrNegDocVecdistractorTest.py hi_raw_75_2/NoOfDataPoints shape shape conf_files/hindi/hindi_main_excluded_workers_raw.conf | tee -a hi_raw_75_shape.csv; done
+for i in {1..21}; do python Validation/macro-pos5DescrNegDocVecdistractorTest.py hi_raw_75_3/NoOfDataPoints shape shape conf_files/hindi/hindi_main_excluded_workers_raw.conf | tee -a hi_raw_75_shape.csv; done
+for i in {1..21}; do python Validation/macro-pos5DescrNegDocVecdistractorTest.py hi_raw_75_4/NoOfDataPoints shape shape conf_files/hindi/hindi_main_excluded_workers_raw.conf | tee -a hi_raw_75_shape.csv; done
+for i in {1..21}; do python Validation/macro-pos5DescrNegDocVecdistractorTest.py hi_raw_75_5/NoOfDataPoints shape shape conf_files/hindi/hindi_main_excluded_workers_raw.conf | tee -a hi_raw_75_shape.csv; done
+for i in {1..21}; do python Validation/macro-pos5DescrNegDocVecdistractorTest.py hi_raw_75_6/NoOfDataPoints shape shape conf_files/hindi/hindi_main_excluded_workers_raw.conf | tee -a hi_raw_75_shape.csv; done
+for i in {1..21}; do python Validation/macro-pos5DescrNegDocVecdistractorTest.py hi_raw_75_7/NoOfDataPoints shape shape conf_files/hindi/hindi_main_excluded_workers_raw.conf | tee -a hi_raw_75_shape.csv; done
+for i in {1..21}; do python Validation/macro-pos5DescrNegDocVecdistractorTest.py hi_raw_75_8/NoOfDataPoints shape shape conf_files/hindi/hindi_main_excluded_workers_raw.conf | tee -a hi_raw_75_shape.csv; done
