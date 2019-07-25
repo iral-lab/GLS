@@ -14,6 +14,7 @@ import os
 import math
 import sys
 from datetime import datetime
+import re
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import (brier_score_loss, precision_score, recall_score,f1_score)
 from sklearn import linear_model
@@ -27,7 +28,7 @@ import argparse
 from gensim.models.doc2vec import LabeledSentence
 from gensim.models import Doc2Vec
 from scipy import spatial
-
+import pickle
 
 reload(sys)  # this is a bit of a hack to get everything to default to utf-8
 sys.setdefaultencoding('UTF8')
@@ -38,7 +39,7 @@ sys.setdefaultencoding('UTF8')
 MIN_POS_INSTS = 3
 #This controls the minimum number of times a token has to appear in descriptions for an instance before the instance
 #is deemed to be a positive example of this token
-MIN_TOKEN_PER_INST = 5
+MIN_TOKEN_PER_INST = 2
 
 
 parser = argparse.ArgumentParser()
@@ -47,11 +48,14 @@ parser.add_argument('--cat', help='type for learning', choices=['all','rgb','sha
 parser.add_argument('--pre', help='the file with the preprocessed data', required=True)
 parser.add_argument('--cutoff',choices=['0.25','0.5','0.75'],help='the cutoff for what portion of negative examples to use', default='0.25')
 parser.add_argument('--seed',help='a random seed to use', default=None, required=False)
+parser.add_argument('--visfeat',help='folder for features', default="ImgDz", required=False)
+parser.add_argument('--listof',help='file for list of instances/files', default="list_of_instances.conf", required=False)
+parser.add_argument('--negexmpl',help='file where negative examples are saved', default="", required=False)
 
 args = parser.parse_args()
 
-RAND_SEED = int(args.seed)
-random.seed(RAND_SEED)
+# RAND_SEED = int(args.seed)
+# random.seed(RAND_SEED)
 
 resultDir = args.resDir
 
@@ -64,8 +68,11 @@ execType = 'random'
 
 execPath = './'
 dPath = "../"
-dsPath = dPath + "ImgDz/"
-fAnnotation = execPath + "list_of_instances.conf"
+dsPath = dPath + args.visfeat
+fAnnotation = execPath + args.listof
+
+# whether to regen negative examples or load from previous file
+argGenNeg = args.negexmpl
 
 dgAbove = 80
 
@@ -74,11 +81,25 @@ cDf = ""
 nDf = ""
 tests = ""
 
-
 """generalObjs = ['potatoe','cylinder','square', 'cuboid', 'sphere', 'halfcircle','circle','rectangle','cube','triangle','arch','semicircle','halfcylinder','wedge','block','apple','carrot','tomato','lemon','cherry','lime', 'banana','corn','hemisphere','cucumber','cabbage','ear','potato', 'plantain','eggplant']
 
 generalShapes = ['spherical', 'cylinder', 'square', 'rounded', 'cylindershaped', 'cuboid', 'rectangleshape','arcshape', 'sphere', 'archshaped', 'cubeshaped', 'curved' ,'rectangular', 'triangleshaped', 'halfcircle', 'globular','halfcylindrical', 'circle', 'rectangle', 'circular', 'cube', 'triangle', 'cubic', 'triangular', 'cylindrical','arch','semicircle', 'squareshape', 'arched','curve', 'halfcylinder', 'wedge', 'cylindershape', 'round', 'block', 'cuboidshaped']
 """
+
+# written to parse all files
+
+# get the object name from object label string
+def get_object_name(object_str):
+    match = re.search(r'(\w+[^1-9][^1-9])_\d+', object_str)
+    return match.group(1)
+
+# get the number for the object label string
+def get_object_num(object_str):
+    match = re.search(r'\w+[^1-9][^1-9]_(\d.*)', object_str)
+    return match.group(1)
+
+
+
 
 def fileAppend(fName, sentence):
   """""""""""""""""""""""""""""""""""""""""
@@ -177,9 +198,11 @@ class NegSampleSelection:
          cInstMap = {}
          cInstance = docNames[i]
          for j,item2 in enumerate(docLabels):
+
             tDoc = model.docvecs[docLabels[j]]
             cosineVal = max(-1.0,min(self.cosine_similarity(fDoc,tDoc),1.0))
-
+            
+            
             try:
             	cValue = math.degrees(math.acos(cosineVal))
             except:
@@ -201,6 +224,12 @@ class NegSampleSelection:
              sentAngles += item[0]+"-"+str(item[1])+","
         sentAngles = sentAngles[:-1]
         negInstances[k] = sentAngles
+
+	  # pickle negative examples for later use
+
+      with open('NegExamples_'+ resultDir + '.pickle', 'wb') as handle:
+		     pickle.dump(negInstances, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
       return negInstances
 
 ############Negative Example Generation --- END ########
@@ -490,7 +519,8 @@ class DataSet:
       for (k1,v1) in nDs:
           instName = k1.strip()
           (cat,inst) = instName.split("/")
-          (_,num) = inst.split("_")
+		  # issue with things like water_bottle
+          num = get_object_num(inst)
           if cat not in categories.keys():
              categories[cat] = Category(cat)
           categories[cat].addCategoryInstances(num)
@@ -548,6 +578,7 @@ class DataSet:
 
       for inst in docs.keys():
           #get the counts for tokens and filter those < MIN_TOKEN_PER_INST
+
           token_counts = pd.Series(docs[inst].split(" ")).value_counts()
           token_counts = token_counts[token_counts >= MIN_TOKEN_PER_INST]
           dsTokens = token_counts.index.tolist()
@@ -572,7 +603,13 @@ class DataSet:
       sent = "Tokens :: "+ " ".join(tokenDf.keys())
       fileAppend(fName,sent)
       negSelection = NegSampleSelection(docs)
-      negExamples = negSelection.generateNegatives()
+
+      # check if the negative examples
+      if argGenNeg != "":
+         with open(argGenNeg, 'rb') as handle:
+            negExamples = pickle.load(handle)
+      else:
+         negExamples = negSelection.generateNegatives()
 
       """ find negative instances for all tokens.
       """
@@ -835,6 +872,7 @@ if __name__== "__main__":
   ds = DataSet(dsPath,anFile)
   """ find all categories and instances in the dataset """
   (cDf,nDf) = ds.findCategoryInstances()
+
   """ find all test instances. We are doing 4- fold cross validation """
   tests = ds.splitTestInstances(cDf)
   print "ML START :: " + datetime.now().strftime("%Y-%m-%d %H:%M:%S")

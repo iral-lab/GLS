@@ -74,6 +74,9 @@ def filteringSentences(fName, lemm=True, stemm=True, stop=True,lan = "english"):
         ending += "_stop"
         if lan in ["spanish","english"]:
             stop_words = set(stopwords.words(lan))
+            stop_words.remove(u'can')
+
+
         else:
             stop_words = []
     if not(stemm) and not(lemm):
