@@ -1,6 +1,6 @@
 # Grounded language Learning System
 
-One Paragraph of project description goes here
+General system framework for learning word-as-classifer groundings
 
 ### Prerequisites
 
