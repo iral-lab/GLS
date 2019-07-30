@@ -10,6 +10,13 @@ General system framework for learning word-as-classifer groundings
 
 ## Running the tests
 
+
+#### Preprocessing language input
+
+```
+python2 preprocess_descriptions.py <language name> <language> <"stop", "lemm", or "stemm">
+```
+
 #### Learning
 
 ```
