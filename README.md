@@ -10,6 +10,8 @@ General system framework for learning word-as-classifer groundings
 
 ## Running the tests
 
+Visual features should be stored in a folder one diectory above GLS
+
 
 #### Preprocessing language input
 
