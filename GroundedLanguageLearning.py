@@ -16,12 +16,13 @@ class GroundedLanguageClassifier(nn.Module):
         self.percept_encoder = percept_encoder
         self.scoring = corr_scorer
     def forward(self, text, percepts):
+        #changing rep with representation
         text_rep = self.text_encoder(text)
         percept_rep = self.percept_encoder(percepts)
         correspond_score = self.scoring(text_rep, percept_rep)
         return correspond_score
 
-class EmptyExtractor(nn.Module): #Semantic parsing Luke's work
+class EmptyExtractor(nn.Module): #Semantic parsing: Luke's research
     def __init__(self):
         super(EmptyExtractor, self).__init__()
         pass
@@ -84,9 +85,9 @@ class GLSLearner:
         ## on the loss and/or its gradient
         while train_params.continue_training(loss_val, iter_index):
             train_batch = get_next_batch(train_dataset, iter_index)
-            vals = self.model(train_batch.text, train_batch.percepts)
+            predicted_values = self.model(train_batch.text, train_batch.percepts)
             loss_score = self.loss(y_true=train_batch.labels,
-                             y_pred=vals)
+                             y_pred=predicted_values)
             loss_score.backward()
             self.optimizer.step()
             if train_params.do_val(iter_index):
@@ -96,9 +97,10 @@ class GLSLearner:
             iter_index += 1
 
     def predict(self, dataset):
+        # did you mean test phase?
         ## get predictions
         return predictions
 
     def evaluate(self, y_true, y_pred):
-        ## perform whatever evals
+        ## perform whatever evaluations
         print("eval")
