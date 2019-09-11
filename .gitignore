@@ -1,4 +1,6 @@
-
+__pycache__
+*.pkl
+venv
 *.csv
 *.bash
 run_commands_sample
