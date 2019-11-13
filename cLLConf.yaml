@@ -1,0 +1,39 @@
+AL:
+  dppPoints: 5
+  execType: alpool
+  generatePoints: 'yes'
+  gmmPoints: 30
+  selectionType: max
+VAE:
+  v1activationFn: relu
+  cumulativeFeatures: 'no'
+  allImagesForVAE: 'yes'
+  v1HiddenDims:
+  - 400
+  - 250
+  v2activationFn: relu
+  v2HiddenDims:
+  - 200
+  - 100
+  - 50
+  testOption: 3
+ablationPercentage: 100
+activationFn: relu
+annotationFile: /Users/nishapillai/Documents/GitHub/DataSets/IRAL/6k_lemmatized_72instances_mechanicalturk_description.conf
+cat: object
+classifierModel: LR
+inputFeatures: cNNFeatures 
+cnnChoice: nasnetlarge
+cnnFineTuning: 'yes'
+execType: random
+fAnnot: /Users/nishapillai/Documents/GitHub/DataSets/IRAL/groundtruth_annotation.conf
+featuresDSPath: /Users/nishapillai/Documents/GitHub/DataSets/IRAL/ImgDz/
+hiddenDims:
+- 500
+- 300
+imageDSPath: /Users/nishapillai/Documents/GitHub/DataSets/IRAL/rgbdcollection/
+iteration: 1
+negatives: semanticSimilarity
+noPts: 6000
+resDir: test
+testNum: 0
