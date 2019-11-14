@@ -48,7 +48,7 @@ def sampling(args):
     
    
 
-def semiVAEM1Model(x_train, hDims, activationFunction):
+def VAEM1Model(x_train, hDims, activationFunction):
    image_size = x_train[0].shape[0]
    input_shape = (image_size, )
    inputs = Input(shape=input_shape)
@@ -397,11 +397,164 @@ def VAEM2Model(m1Enc, m1Vae, X, Y, hDims, activationFunction):
    return   classModel
 
 
+def VAEM2Model1(m1Enc, m1Vae, X, Y, hDims, activationFunction):
+   dim_z = hDims[-1]
+
+   dim_y = Y.shape[1]
+   epochs = 5
+   lrate = 3e-4
+   alpha = 0.1
+   l2_loss = 1e-6
+   p_x = 'gaussian'
+   q_z = 'gaussian'
+   p_z = 'gaussian'
+   p_y = 'uniform'
+   nl_px = 'softplus'
+   nl_qz = 'softplus'
+   nl_qy = 'softplus' 
+   #p(x|z,y), q(z|x,y) and q(y|x)
+
+   z_Samples_Count = 10
+   
+   
+   X_m1 = np.array(m1Enc.predict(X))    
+   dim_x = X_m1.shape[1]
+   #M2  network
+   # sampling of data_lab
+ 
+   y_inputs = Input(shape=(dim_y,), name='yv2_input')
+   x_samples = Input(shape=(dim_x,), name='xv2_input')
+   
+   Z2_Ubl = []
+   PX2_Ubl = []
+   Z2_mu_Ubl = []
+   Z2_sig_Ubl = []
+   Y_Ubl = []   
+   for lIjk in range(z_Samples_Count):
+      #classifier network   for unlabeled samples
+#      qy_layer = Dense(hidden_qy, activation=nl_qy,kernel_regularizer = l2(l2_loss))(x_samples)
+      qy_layer = x_samples
+      if len(hDims) > 0:
+         qy_layer = MLP(qy_layer, hDims, nl_qy)
+      qy_outs = Dense(dim_y, activation=nl_qy,name='m2latent'+ str(lIjk),kernel_regularizer = l2(l2_loss))(qy_layer)
+      qy_latent = Dense(dim_y, activation='sigmoid',name='m2latent_predicts'+ str(lIjk),kernel_regularizer = l2(l2_loss))(qy_outs)
+
+      if lIjk == 0:
+      	Y_Ubl = qy_latent
+      else:
+      	Y_Ubl = concatenate([Y_Ubl, qy_latent], axis=0)
+   
+   
+#    yMarginSamples = samples.getS()
+#    yMarginSamples = np.array(yMarginSamples)
+#    yMS = [K.variable(np.reshape(yMarginSamples[lIjk],(-1,yMarginSamples.shape[1]))) for lIjk in range(yMarginSamples.shape[0]) ]
+# 
+#    for lIjk in range(yMarginSamples.shape[0]):
+#       yS = yMS[lIjk]
+#       print(yS)
+#       yS = K.reshape(yS, shape=(None,yMarginSamples.shape[1]))
+#       print(yS)
+#       
+      #m2   for unlabeled samples
+   hDimSizes = np.array(hDims[:-1])
+   hDimsR = hDimSizes[::-1]
+   
+   for ijk in range(z_Samples_Count):
+#            u_xy_concat = concatenate([x_samples,qy_latent])
+#            u_xy_concat = concatenate([x_samples,yS])     
+            u_xy_concat = concatenate([x_samples,y_inputs])       
+            u_z2_mu_outs, u_z2_sig_outs, u_z2_samples = M2Encoder(u_xy_concat, hDimSizes, nl_qz, l2_loss, dim_z,  "unlbl" + str(lIjk) + "-" + str(ijk))
+#            u_zy_concat = concatenate([u_z2_samples,qy_latent])
+            u_zy_concat = concatenate([u_z2_samples, y_inputs])            
+            u_px_outs = M2Decoder( u_zy_concat, hDimsR, nl_px, l2_loss, dim_x,  "unlbl"+ str(lIjk) + "-" + str(ijk))
+            if ijk == 0 :
+                Z2_Ubl = u_z2_samples
+                Z2_mu_Ubl = u_z2_mu_outs
+                Z2_sig_Ubl = u_z2_sig_outs
+                PX2_Ubl = u_px_outs
+            else:
+                Z2_Ubl = concatenate([Z2_Ubl, u_z2_samples], axis=0)      
+                Z2_mu_Ubl = concatenate([Z2_mu_Ubl, u_z2_mu_outs], axis=0)     
+                Z2_sig_Ubl = concatenate([Z2_sig_Ubl, u_z2_sig_outs], axis=0)     
+                PX2_Ubl = concatenate([PX2_Ubl, u_px_outs], axis=0)
+                
+
+#    # Supervised Model
+#    Z2 = []
+#    PX2 = []
+#    Z2_mu = []
+#    Z2_sig = []
+#    #m2   for labeled samples
+#    for ijk in range(z_Samples_Count):
+#       l_xy_concat = concatenate([x_samples,y_inputs])
+#       l_z2_mu_outs, l_z2_sig_outs, l_z2_samples = M2Encoder(l_xy_concat, hDimSizes, nl_qz, l2_loss, dim_z,  "lbl" + str(ijk))
+#             	
+#       l_zy_concat = concatenate([l_z2_samples,y_inputs])
+#       l_px_outs = M2Decoder( l_zy_concat, hDimsR, nl_px, l2_loss, dim_x,  "lbl"+ str(ijk))
+#       Z = concatenate([l_z2_mu_outs, l_z2_sig_outs, l_z2_samples], axis=0)
+#       if ijk == 0:
+#       	Z2 = l_z2_samples
+#       	Z2_mu = l_z2_mu_outs
+#       	Z2_sig = l_z2_sig_outs
+#       	PX2 = l_px_outs
+#       else:
+#       	Z2 = concatenate([Z2, l_z2_samples], axis=0)      
+#       	Z2_mu = concatenate([Z2_mu, l_z2_mu_outs], axis=0)     
+#       	Z2_sig = concatenate([Z2_sig, l_z2_sig_outs], axis=0)     
+#       	PX2 = concatenate([PX2, l_px_outs], axis=0)
+# 
+# 
+ # multi-label classifier y^
+   qy_mLabel =  x_samples
+   if len(hDims) > 0:
+         qy_mLabel = MLP(qy_mLabel, hDims, nl_qy)
+#   qy_mLabel = Dense(hidden_qy, activation=nl_qy,kernel_regularizer = l2(l2_loss))(x_samples)
+   qy_classifier = Dense(dim_y, activation='sigmoid',name='m2predicts',kernel_regularizer = l2(l2_loss))(qy_mLabel)
+
+# 
+#    m2Model = Model(inputs=[x_samples, y_inputs], outputs=[PX2, qy_classifier], name='vaem2model')  ## supervised model with N latent samples
+   
+   m2Model = Model(inputs=[x_samples, y_inputs], outputs=[PX2_Ubl, qy_classifier], name='vaem2model')  ## unsupervised model with N * N latent samples
+ 
+   m2Model.summary()   
+   classModel = Model(inputs=[x_samples], outputs=[qy_classifier])
+#   classModel = Model(inputs=[x_samples], outputs=[u_z2_samples])
+   optimizer = Adam(lr=lrate)
+#    m2Model.compile(optimizer=optimizer, loss=m2LabelledLoss(x_samples, y_inputs, qy_classifier, Z2, Z2_mu, Z2_sig, PX2, z_Samples_Count))   
+#   m2Model.compile(optimizer=optimizer, loss=m2UnLabelledLoss(x_samples, yMarginSamples, Y_Ubl, qy_classifier, Z2_Ubl, Z2_mu_Ubl, Z2_sig_Ubl, PX2_Ubl, z_Samples_Count))   
+   m2Model.compile(optimizer=optimizer, loss=m2UnLabelledLoss(x_samples, y_inputs, qy_classifier, Y_Ubl, Z2_Ubl, Z2_mu_Ubl, Z2_sig_Ubl, PX2_Ubl, z_Samples_Count))   
+#   m2Model.compile(optimizer=optimizer, loss='binary_crossentropy')
+
+#   X2 = np.array([X_m1[i] for i in range(X_m1.shape[1])])
+   print("...",X_m1.shape)
+   X2 = np.array(X_m1)
+   print("...",X2.shape)
+ #  history = m2Model.fit([X2,Y], [X2,Y], epochs=epochs,batch_size=1)
+   yMarginSamples = samples.getS()
+   yMarginSamples1 = np.array(yMarginSamples)
+   print( "=====", yMarginSamples1.shape, len(X))
+   yMarginSamples = np.array(yMarginSamples1[:len(X),:])
+   yMarginSamples1 = []
+   for i in range(len(yMarginSamples)):
+       yS1 = []
+       for ij in range(dim_y - yMarginSamples.shape[1]):
+           yS1.extend([0])
+       yS1.extend(yMarginSamples[i])
+       yMarginSamples1.append(yS1)
+   yMarginSamples = np.array(yMarginSamples1)
+
+   print("------>", yMarginSamples.shape, X2.shape, qy_classifier)
+   history = m2Model.fit([X2, yMarginSamples], [X2, yMarginSamples], epochs=epochs,batch_size=1)
+
+   return   classModel
+
 def VAEM2Test(m1Enc, m1Vae, m2Vae, testX, testY):
 
    X_m1 = np.array(m1Enc.predict(testX))    
    X2 = np.array(X_m1)
    ynew = m2Vae.predict(X2)
+   proba = np.transpose(ynew)
+   return proba
 #    # show the inputs and predicted outputs
 #    for i in range(len(X2)):
 #        print("X %s, Predicted=%s, class %s" % (i, ynew[i], np.argmax(ynew[i])))
@@ -442,10 +595,11 @@ def getVAEFeatures(configParams, insts, tkns, tests, tobeTestedTokens, allInstTo
    algType = vaeConf['testOption']
    X_features = []
    vaeFeatures = []
+   prob = []
    if algType == 1: 
    #M1 with One VAE,
        X_features = np.vstack(insts[inst][0].getFeatures(kind) for inst in insts.keys() if inst not in tests)
-       encoder,vae = semiVAEM1Model(X_features, h1Dims, h1activationFunction)
+       encoder,vae = VAEM1Model(X_features, h1Dims, h1activationFunction)
        X_features = np.vstack([insts[inst][0].getFeatures(kind) for inst in insts.keys()])
        vaeFeatures = encoder.predict(X_features)
    elif algType == 2: 
@@ -454,8 +608,8 @@ def getVAEFeatures(configParams, insts, tkns, tests, tobeTestedTokens, allInstTo
        (xImages_s, trainFeatures_s, labels_s) = cLLML.getImagesAndFeatures(insts, tests, tobeTestedTokens, 'shape', allTknInsts=allInstTokens)
        trainFeatures_c = np.array(trainFeatures_c)
        trainFeatures_s = np.array(trainFeatures_s)
-       encoder_c,vae_c = semiVAEM1Model(trainFeatures_c, h1Dims, h1activationFunction)
-       encoder_s,vae_s = semiVAEM1Model(trainFeatures_s, h1Dims, h1activationFunction)
+       encoder_c,vae_c = VAEM1Model(trainFeatures_c, h1Dims, h1activationFunction)
+       encoder_s,vae_s = VAEM1Model(trainFeatures_s, h1Dims, h1activationFunction)
        (xImages_c, trainFeatures_c, labels_c) = cLLML.getImagesAndFeatures(insts, tests, tobeTestedTokens, 'rgb', True, allTknInsts=allInstTokens)
        (xImages_s, trainFeatures_s, labels_s) = cLLML.getImagesAndFeatures(insts, tests, tobeTestedTokens, 'shape', True, allTknInsts=allInstTokens)
        (xImages_o, trainFeatures_o, labels_o) = cLLML.getImagesAndFeatures(insts, tests, tobeTestedTokens, 'object', True, allTknInsts=allInstTokens)	
@@ -472,16 +626,19 @@ def getVAEFeatures(configParams, insts, tkns, tests, tobeTestedTokens, allInstTo
 
    elif algType == 3:
    #  M2 with One VAE
+    if configParams['inputFeatures'] == 'kernelDescriptors'  :
        (xImages, trainFeatures, labels) = cLLML.getImagesAndFeatures(insts, tests, tobeTestedTokens, kind, labelsForImages=False, allTknInsts=allInstTokens)
        (posLabels, negLabels, unLabels, posNegUnLabelBinaryVector) = cLLML.getPosNegUnlabeledTokens(insts, tests, tobeTestedTokens, kind, labelsForImages=False, allTknInsts=allInstTokens)
        trainFeatures = np.array(trainFeatures)
-       encoder,vae = semiVAEM1Model(trainFeatures, h1Dims, h1activationFunction)
+       encoder,vae = VAEM1Model(trainFeatures, h1Dims, h1activationFunction)
        m2Vae = VAEM2Model(encoder, vae, trainFeatures, posNegUnLabelBinaryVector, h2Dims, h2activationFunction)
-       (xTestImages, testFeatures, testlabels) = cLLML.getImagesAndFeatures(insts, tests, tobeTestedTokens, kind, labelsForImages=False, onlyTestData=True, allTknInsts=allInstTokens)
-       (testPosLabels, testNegLabels, testUnLabels, testPosNegUnLabelBinaryVector) = cLLML.getPosNegUnlabeledTokens(insts, tests, tobeTestedTokens, kind, labelsForImages=False, onlyTestData=True, allTknInsts=allInstTokens)
-       testFeatures = np.array(testFeatures)		
-       VAEM2Test(encoder, vae, m2Vae, testFeatures,  testPosNegUnLabelBinaryVector)
-       exit(0)
+#        (xTestImages, testFeatures, testlabels) = cLLML.getImagesAndFeatures(insts, tests, tobeTestedTokens, kind, labelsForImages=False, onlyTestData=True, allTknInsts=allInstTokens)
+#        (testPosLabels, testNegLabels, testUnLabels, testPosNegUnLabelBinaryVector) = cLLML.getPosNegUnlabeledTokens(insts, tests, tobeTestedTokens, kind, labelsForImages=False, onlyTestData=True, allTknInsts=allInstTokens)
+       (xTestImages, testFeatures, testlabels) = cLLML.getImagesAndFeatures(insts, tests, tobeTestedTokens, kind, labelsForImages=False, includetestData=True, allTknInsts=allInstTokens)
+       (testPosLabels, testNegLabels, testUnLabels, testPosNegUnLabelBinaryVector) = cLLML.getPosNegUnlabeledTokens(insts, tests, tobeTestedTokens, kind, labelsForImages=False, includetestData=True, allTknInsts=allInstTokens)
+       testFeatures1 = np.array(testFeatures)		
+       X_features = testFeatures
+       prob = VAEM2Test(encoder, vae, m2Vae, testFeatures1,  testPosNegUnLabelBinaryVector)
        
       
-   return list(X_features), list(vaeFeatures)
+   return list(X_features), list(vaeFeatures), prob

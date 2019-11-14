@@ -1,39 +1,88 @@
 AL:
   dppPoints: 5
+  #options : int()
+
   execType: alpool
+  #options :  enum('alpool','aluncert','aldpp','algmmdpp', 'ald2VgmmPool')  
+
   generatePoints: 'yes'
+  #options : enum('yes', 'no')
+
   gmmPoints: 30
+  #options : int()
+
   selectionType: max
+  #options : enum('max')
+
 VAE:
   v1activationFn: relu
+  #options : enum('relu', 'tanh') 
+
   cumulativeFeatures: 'no'
+  #options : enum('yes', 'no')
+
   allImagesForVAE: 'yes'
+  #options : enum('yes', 'no')
+
   v1HiddenDims:
   - 400
   - 250
+
   v2activationFn: relu
+  #options : enum('relu', 'tanh')
+
   v2HiddenDims:
   - 200
   - 100
   - 50
+
   testOption: 3
+  #options : testOption: enum(1,2,3)
+
 ablationPercentage: 100
+#options : int(min=5, max=100)
+
 activationFn: relu
+#options : enum('relu', 'tanh')
+
 annotationFile: /Users/nishapillai/Documents/GitHub/DataSets/IRAL/6k_lemmatized_72instances_mechanicalturk_description.conf
+
 cat: object
+#options : enum('rgb', 'shape', 'object')
+
 classifierModel: LR
-inputFeatures: cNNFeatures 
+#options : enum('LR', 'SVM', 'MLP')
+
+inputFeatures: cNNFeatures
+#options : enum('kernelDescriptors', 'cNNFeatures')
+
 cnnChoice: nasnetlarge
+#options : enum('nasnetlarge', 'smallervggnet', 'resnet50', 'vgg16', 'vgg19', 'inceptionv3', 'resnext101', 'inceptionResnetV2')
+
 cnnFineTuning: 'yes'
-execType: random
+#options : enum('yes', 'no')
+
+execType: cNNMultiLabel
+#options : enum('seq', 'random', 'al', 'vae', 'cNNMultiLabel')
+
 fAnnot: /Users/nishapillai/Documents/GitHub/DataSets/IRAL/groundtruth_annotation.conf
+
 featuresDSPath: /Users/nishapillai/Documents/GitHub/DataSets/IRAL/ImgDz/
+
 hiddenDims:
 - 500
 - 300
+
 imageDSPath: /Users/nishapillai/Documents/GitHub/DataSets/IRAL/rgbdcollection/
+
 iteration: 1
+
 negatives: semanticSimilarity
+#options : enum('semanticSimilarity', 'negativeSampling')
+
 noPts: 6000
+
 resDir: test
+
 testNum: 0
+#options : int(min=0, max=3)

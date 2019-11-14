@@ -88,6 +88,8 @@ objWords = ['cylinder', 'apple','carrot', 'lime','lemon','orange', 'banana','cub
 tobeTestedTokens = rgbWords
 tobeTestedTokens.extend(shapeWords)
 tobeTestedTokens.extend(objWords)
+global modelNN, mlbNN
+
 
 
 def fileAppend(fName, sentence):
@@ -112,28 +114,30 @@ def classifierModel(model="LR", xDim=700, yDim=2):
    elif model == "SVM":
       pipeline = SVC(C=1.0, kernel='rbf', degree=3, gamma='auto', probability=True)
    elif model == "MLP":    
-#      pipeline = MLP(xDim, yDim)
-      pipeline = MLPClassifier(hidden_layer_sizes=(hDims), activation=actFuncs[0], alpha=1e-4, solver='adam', verbose=10, tol=1e-4, random_state=1, learning_rate_init=.1)
+      hDims = configParams['hiddenDims']
+      activationFunction = configParams['activationFn']
+#      pipeline, pExtract = MLP(xDim, yDim, hDims, activationFunction )
+      pipeline = MLPClassifier(hidden_layer_sizes=(hDims), activation=activationFunction, alpha=1e-4, solver='adam', verbose=10, tol=1e-4, random_state=1, learning_rate_init=.1)
    return pipeline   	
 
 
-def MLP(xDim, yDim):
+def MLP(xDim, yDim, hDims, activationFunction):
+   l2_loss = 1e-6
    input_shape = (xDim, )
-   inputs = Input(shape=input_shape)
-   x1 = inputs
+   inputs = Input(shape=input_shape)   
+   layer = inputs
    for i in range(len(hDims)):
-   	   aF = 'relu'
-   	   if i < len(actFuncs):
-   	     aF = actFuncs[i]
-   	   x = Dense(hDims[i], activation=aF)(x1)
-   	   x1 = x       	 
-   outs = Dense(yDim, activation='softmax')(x1)
+   	   x = Dense(hDims[i], activation=activationFunction, kernel_regularizer = l2(l2_loss))(layer)
+   	   layer = x       	 
+   outs = Dense(yDim, activation='softmax')(layer)
 # instantiate model
    model = Model(inputs=inputs, outputs=outs)
+   modelExtract = Model(inputs=inputs, outputs=layer)
    model.summary()
    model.compile(optimizer='adam',loss='mean_squared_error')
-   return model
-
+   
+   return model, modelExtract
+   
 def classifierFit(classModel, X, Y, model="lr"):
 
       if model == "LR" or model == "SVM":
@@ -888,7 +892,7 @@ def getPosNegUnlabeledTokens(insts1, tests, tTested, kind, includetestData=False
 #        print("Mean: ", np.mean([len(unLabels[i]) for i in range(len(unLabels))]))           
 
        posNegUnLabelBinaryVector = []                
-       mlb = MultiLabelBinarizer(classes=sorted(list(set(tTested))))
+       mlb = MultiLabelBinarizer(classes=tTested)
        labels = mlb.fit_transform(posLabels)
        ulabels = mlb.fit_transform(unLabels) * -1
 #       posNegUnLabelBinaryVector = labels + ulabels
@@ -934,6 +938,7 @@ def getImagesAndFeatures(insts1,tests,tTested, kind,includetestData=False, label
        return  xImages, trainFeatures, labels
 
 def callML(resultDir,insts,tkns,tests):
+  global modelNN, mlbNN
   """ generate a CSV result file with all probabilities 
 	for the association between tokens (words) and test instances"""	
   confFile = open(resultDir + '/groundTruthPrediction.csv','w')
@@ -950,18 +955,20 @@ def callML(resultDir,insts,tkns,tests):
   
   tokenDict = tkns.to_dict()
   tobeTestedTokens = sorted(tokenDict.keys())
+  tobeTestedTokens = sorted(list(set(tobeTestedTokens)))
   X_features = [] 
   vaeFeatures = []
-  
+  probabilities = []
+  vaeMultilabelIndices = []
   if execType == 'vae':
-     X_features, vaeFeatures = VAE.getVAEFeatures(configParams, insts, tkns, tests, tobeTestedTokens, allInstTokens)
+     X_features, vaeFeatures, probabilities = VAE.getVAEFeatures(configParams, insts, tkns, tests, tobeTestedTokens, allInstTokens)
   """ fine tokens, type to test, train/test features and values """
   for (token,kind,X,Y,tX,tY) in findTrainTestFeatures(insts,tkns,tests):
    if token not in testTokens:
       testTokens.append(token)
    print ("Token : " + token + ", Kind : " + kind)
    X1 = []
-   if execType == 'vae':
+   if execType == 'vae' and configParams['VAE']['testOption'] != 3:
        for xIn in X:
            ind = [i for i, xx in enumerate(X_features) if np.array_equal(xx, xIn)]
            X1.append(vaeFeatures[ind[0]])
@@ -973,12 +980,14 @@ def callML(resultDir,insts,tkns,tests):
 
 
 #   if execType == 'random' or execType == 'seq':
-   classifierFit(pipeline2_2, X, Y, model=classModel)
+   if execType != 'cNNMultiLabel' and not(execType == 'vae' and configParams['VAE']['testOption'] == 3):
+       classifierFit(pipeline2_2, X, Y, model=classModel)
    fldNames = np.array(['Token','Type'])  
    confD = {}
    ttX = []
    ttY = []
    testTT = []
+   xTests = []
    confDict = {'Token' : token,'Type' : kind}
    """ testing all images category wise and saving the probabilitties in a Map 
    		for ex, for category, tomato, test all images (tomato image 1, tomato image 2...)"""
@@ -988,33 +997,65 @@ def callML(resultDir,insts,tkns,tests):
       ttX.extend(testX)
       ttY.extend(testY)
       tt = tests[ii]
-      for ik in range(len(testY)):
+      ttNos = len(testY)
+      if execType == 'cNNMultiLabel':
+      	instImages = insts[tt][0].getImages()
+      	xTests.extend(instImages)
+      	ttNos = len(instImages)
+      	 
+      for ik in range(ttNos):
          fldNames = np.append(fldNames,str(ik) + "-" + tt)
          confD[str(ik) + "-" + tt] = str(fSet[tt])
          testTT.append(str(ik) + "-" + tt)
 
    
-   if execType == 'vae':
+   if execType == 'vae' and configParams['VAE']['testOption'] != 3:
        X1 = []
        for xIn in  ttX:
            ind = [i for i, xx in enumerate(X_features) if np.array_equal(xx, xIn)]
            X1.append(vaeFeatures[ind[0]])
        ttX = np.array(X1)
+   if execType == 'vae' and configParams['VAE']['testOption'] == 3:    
+       for xIn in  ttX:
+       	        ind = [i for i, xx in enumerate(X_features) if np.array_equal(xx, xIn)]
+       	        vaeMultilabelIndices.append(ind)
+       
    predY = []  
    tProbs = []
 #   if execType == 'random' or execType == 'seq':
 #         predY = pipeline2_2.predict(ttX)
-   probK = classifierPredict(pipeline2_2, ttX, model=classModel)
-   tProbs = probK[:,1]
-   for ik in range(len(tProbs)):
+   if execType != 'cNNMultiLabel' and not(execType == 'vae' and configParams['VAE']['testOption'] == 3):  
+      probK = classifierPredict(pipeline2_2, ttX, model=classModel)
+      tProbs = probK[:,1]
+      for ik in range(len(tProbs)):
            confDict[testTT[ik]] = str(tProbs[ik])
            
    if headFlag == 0:
       headFlag = 1
+      ### Execute only once
+      
+      if execType == 'cNNMultiLabel':
+      	probabilities = mLabel.test(xTests, modelNN, mlbNN, nnName)
       """ saving the header of CSV file """
       confWriter = csv.DictWriter(confFile, fieldnames=fldNames)
       confWriter.writeheader()
       confWriter.writerow(confD)
+      
+   if execType == 'cNNMultiLabel'  or (execType == 'vae' and configParams['VAE']['testOption'] == 3):
+   	classes = tobeTestedTokens
+   	if execType == 'cNNMultiLabel' :
+   		classes =  list(mlbNN.classes_)
+   	if token in classes:
+   		ind = classes.index(token)
+   		tProbs  = probabilities[ind]
+   		totalProbs  = len(testTT)
+   		for ik in range(totalProbs):
+   		   if execType == 'vae' and configParams['VAE']['testOption'] == 3 :
+   		   	   confDict[testTT[ik]] = str(tProbs[vaeMultilabelIndices[ik]][0])
+   		   else:
+   		   	   confDict[testTT[ik]] = str(tProbs[ik])
+   			
+   		
    """ saving probabilities in CSV file """
    confWriter.writerow(confDict)
 
@@ -1052,8 +1093,10 @@ def getTotalTrainCases(anFile,tests,nDf,kind):
    return totalTrainCases
 
 if __name__== "__main__":
+  global modelNN, mlbNN
   print ("Script START :: " + datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
   fResName = ""
+  
   os.system("mkdir -p " + resultDir)
   """ creating a Dataset class Instance with dataset path, amazon mechanical turk description file"""
   ds = DataSet(dsPath,preFile)
@@ -1064,10 +1107,14 @@ if __name__== "__main__":
   totalTrainCases = getTotalTrainCases(preFile,tests,nDf,kind)
   (cDf,nDf) = ds.ablationStudyPreparations(cDf,nDf,tests)
   ds.getAllTokens(nDf)
+  
   if inputFeatures == 'cNNFeatures' or cumulativeFeatures == 'yes':
+       
        allTkns = sorted(list(set([tkn for tkns in allInstTokens.values()  for tkn in tkns])))   
        xImages, trainFeatures, labels = getImagesAndFeatures(nDf,tests,allTkns,kind)
        model, mExtract, mlb, nnFeaturesAll = mLabel.classify(xImages,labels,nnName+'-glaML.model',nnName+'-mlb.pickle',nnName+'-loss.png', xImages,nnName, cNNTune)
+       modelNN = model
+       mlbNN = mlb
        for instName in list(nDf.keys()):
            	instImages = nDf[instName][0].getImages()
            	instData, image_dims = mLabel.preProcessImages(instImages, nnName)
