@@ -12,13 +12,16 @@ import nltk
 import string
 import os
 import re
+import nltk
+nltk.download('stopwords')
+nltk.download('wordnet')
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from nltk.stem.porter import PorterStemmer
 from nltk.stem.snowball import SnowballStemmer
 import codecs
-reload(sys)  # This is a bit of a hack to avoid encoding errors
-sys.setdefaultencoding('UTF8')
+#reload(sys)  # This is a bit of a hack to avoid encoding errors
+#sys.setdefaultencoding('UTF8')
 
 lemmatizer = WordNetLemmatizer()
 porter_stemmer = PorterStemmer()
@@ -112,7 +115,8 @@ def filteringSentences(fName, lemm=True, stemm=True, stop=True,lan = "english"):
             out_string = l[0]+ "," + " ".join(filtered_sentence)
             write_file.write(out_string+"\n")
             #print out_string
-    print lan,lemm,stemm,stop
+    print(lan,lemm,stemm,stop)
+    
 
 
 if __name__ == "__main__":
